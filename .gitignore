@@ -1,2 +1,5 @@
 venv/
-#todo.txt
+todo.txt
+__pycache__
+*.pyc
+
