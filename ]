@@ -1,0 +1,297 @@
+import tkinter as tk
+from PIL import Image, ImageColor, ImageTk
+
+bg_color = "#6c97b2"
+bg_color = "#97a1f4"
+bg_color = "#7e52a1"
+bg_color = "#6e5fa7"
+secondary_color2 = "#3d2e8a"
+secondary_color = "#7e52a1"
+
+
+def get_image(kind: str, size: int, bg_color=bg_color):
+    path = f"resources/{kind.replace(' ', '_')}.png"
+    image = Image.open(path)
+    image = image.convert("RGBA")
+    background = Image.new(
+        "RGBA", image.size, ImageColor.getcolor(str(bg_color), "RGBA")
+    )
+    background.paste(image, mask=image)
+    background.thumbnail((size, size))
+    background.convert("RGB")
+    return background
+
+
+class WeatherInfoBlock(tk.Frame):
+    def __init__(
+        self,
+        master,
+        top_text: str,
+        image_text: str,
+        bottom_text: str,
+        size_percentage=100,
+        **kwargs,
+    ):
+        super().__init__(master, **kwargs)
+        self.grid_columnconfigure(0, weight=1)
+
+        self.time = tk.Label(
+            self,
+            text=top_text,
+            font=("Arial", int(30 * size_percentage / 100)),
+            bg=bg_color,
+        )
+        self.time.grid(row=0, column=0, sticky="ew")
+
+        image = get_image(image_text, int(400 * size_percentage / 100))
+        self.photo = ImageTk.PhotoImage(image)
+        self.image_label = tk.Label(self, image=self.photo, bg=bg_color)
+        self.image_label.grid(row=1, column=0, sticky="ew")
+
+        self.temperature = tk.Label(
+            self,
+            text=bottom_text + "°",
+            font=("Arial", int(40 * size_percentage / 100)),
+        )
+        self.temperature.grid(row=2, column=0, sticky="ew")
+        self.temperature.configure(bg=bg_color)
+
+
+class HourlyFrame(tk.Frame):
+    def __init__(self, master, hour_info: [], on_click=None, **kwargs):
+        super().__init__(master, bg=bg_color, **kwargs)
+
+        self.on_click_callback = on_click  # store the passed-in function
+
+        image = get_image("back-button", 50)
+        photo = ImageTk.PhotoImage(image)
+        btn = tk.Button(
+            self,
+            image=photo,
+            command=self.on_click,
+            borderwidth=0,
+            highlightthickness=0,
+            relief="flat",
+            bg=bg_color,
+            activebackground=bg_color,
+            activeforeground=bg_color,
+        )
+        btn.image = photo
+        btn.grid(column=0, row=0, sticky="ew", pady=5)
+        self.button = btn
+
+        for row in range(2):
+            for column in range(4):
+                list_index = row * 4 + column
+                widget = WeatherInfoBlock(
+                    self,
+                    top_text=hour_info[list_index]["time"],
+                    image_text=hour_info[list_index]["kind"],
+                    bottom_text=hour_info[list_index]["temperature"],
+                )
+                widget.grid(row=row * 2 + 1, column=column * 2 + 1, padx=5, pady=5)
+
+                if row < 1:
+                    for column in range(4):
+                        separator = tk.Frame(self, height=2, bg=secondary_color)
+                        separator.grid(
+                            row=row * 2 + 2, column=column * 2 + 1, sticky="ew", pady=2
+                        )
+
+        separator = tk.Frame(self, height=2, bg=secondary_color)
+        separator.grid(row=2, column=0, sticky="ew", pady=2)
+
+    def on_click(self):
+        if self.on_click_callback:
+            self.on_click_callback()
+
+
+def example():
+    hourly_list = [
+        {
+            "time": "00:00",
+            "kind": "fog",
+            "temperature": 20,
+            "humidity": 50,
+        },
+        {
+            "time": "01:00",
+            "kind": "cloudy",
+            "temperature": 21,
+            "humidity": 51,
+        },
+        {
+            "time": "02:00",
+            "kind": "heavy_rain",
+            "temperature": 22,
+            "humidity": 52,
+        },
+        {
+            "time": "03:00",
+            "kind": "light_snow",
+            "temperature": 23,
+            "humidity": 53,
+        },
+        {
+            "time": "04:00",
+            "kind": "fog",
+            "temperature": 24,
+            "humidity": 54,
+        },
+        {
+            "time": "05:00",
+            "kind": "cloudy",
+            "temperature": 25,
+            "humidity": 55,
+        },
+        {
+            "time": "06:00",
+            "kind": "heavy_rain",
+            "temperature": 26,
+            "humidity": 56,
+        },
+        {
+            "time": "07:00",
+            "kind": "light_snow",
+            "temperature": 27,
+            "humidity": 57,
+        },
+    ]
+    for item in hourly_list:
+        item["temperature"] = str(item["temperature"])
+    return hourly_list
+
+
+class SmallInfo(tk.Frame):
+    def __init__(
+        self,
+        master,
+        left_image_path: str,
+        top_text: str,
+        bottom_text: str,
+        bg_color=bg_color,
+        **kwargs,
+    ):
+        super().__init__(master, bg=bg_color, **kwargs)
+
+        font_size = 20
+
+        image = get_image(left_image_path, 64, bg_color)
+        self.photo = ImageTk.PhotoImage(image)
+        self.left_label = tk.Label(self, image=self.photo, bg=bg_color)
+        self.left_label.pack(side="left")
+
+        self.top_label = tk.Label(
+            self, text=top_text, font=("Arial", font_size), bg=bg_color, pady=10
+        )
+        self.top_label.pack(side="top")
+
+        self.bottom_label = tk.Label(
+            self, text=bottom_text, font=("Arial", font_size), bg=bg_color
+        )
+        self.bottom_label.pack(side="bottom")
+
+
+class TodayExclusiveInfo(tk.Frame):
+    def __init__(self, master, info_list: [], **kwargs):
+        super().__init__(master, bg=bg_color, **kwargs)
+        self.info_list = info_list
+        for i, info in enumerate(info_list):
+            info_block = SmallInfo(
+                self,
+                info["image_path"],
+                info["top_text"],
+                info["bottom_text"],
+                secondary_color,
+            )
+            info_block.grid(row=i % 3, column=i % 2)
+
+
+class TodayInfo(tk.Frame):
+    def __init__(
+        self,
+        master,
+        info_block: [],
+        info_list: [],
+        temperature_text: str,
+        **kwargs,
+    ):
+        super().__init__(master, bg=bg_color, **kwargs)
+        self.right_frame = tk.Frame(self, bg=bg_color, **kwargs)
+        # self.extra_info = extra_info
+        self.extra_info = TodayExclusiveInfo(self.right_frame, info_list=info_list)
+        # self.extra_info.master = self.right_frame
+        self.temperature_text = tk.Label(
+            self.right_frame,
+            text=temperature_text + "°",
+            font=("Arial", 200),
+            bg=bg_color,
+        )
+
+        image = get_image("more", 50)
+        photo = ImageTk.PhotoImage(image)
+        btn = tk.Button(
+            self.right_frame,
+            image=photo,
+            command=self.on_click,
+            borderwidth=0,
+            highlightthickness=0,
+            relief="flat",
+            bg=bg_color,
+            activebackground=bg_color,
+            activeforeground=bg_color,
+        )
+        btn.image = photo
+        self.button = btn
+
+        self.temperature_text.pack(side="top", pady=(50, 0))
+        self.extra_info.pack(side="top")
+        self.button.pack(side="top")
+
+        self.left_frame = tk.Frame(self, bg=bg_color, **kwargs)
+        self.info_block = WeatherInfoBlock(
+            self.right_frame,
+            info_block["top_text"],
+            info_block["image_path"],
+            info_block["bottom_text"],
+        )
+        self.info_block.pack(side="left")
+
+        self.left_frame.grid(row=0, column=0)
+        self.right_frame.grid(row=1, column=0)
+        self.pack()
+
+    def on_click(self):
+        print("huh")
+
+
+info_list = [
+    {"image_path": "fog", "top_text": "Item 1", "bottom_text": "Details 1"},
+    {"image_path": "fog", "top_text": "Item 2", "bottom_text": "Details 2"},
+    {"image_path": "fog", "top_text": "Item 3", "bottom_text": "Details 3"},
+    {"image_path": "fog", "top_text": "Item 4", "bottom_text": "Details 4"},
+    {"image_path": "fog", "top_text": "Item 5", "bottom_text": "Details 5"},
+    {"image_path": "fog", "top_text": "Item 6", "bottom_text": "Details 6"},
+]
+
+
+root = tk.Tk()
+root.title("Reusable GUI Part")
+root.configure(bg=bg_color)
+
+
+def handle_back_button():
+    print("Back button clicked")
+
+    # text=bottom_text + "°",
+
+
+# nerdfonts: 
+# test2 = HourlyFrame(root, example(), on_click=handle_back_button)
+# test2.grid(row=0, column=0)
+
+
+# test3 = TodayExclusiveInfo(root, info_list=info_list)
+test4 = TodayInfo(root, info_list[0], info_list, str(14))
+test4.pack()
+root.mainloop()

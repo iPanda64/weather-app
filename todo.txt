@@ -1,0 +1,95 @@
+add this file to .gitignore
+
+daily: (time),
+       temperature,
+                               #       wind direction,
+       hours
+       moon?
+
+today: humidity
+       wind-direction
+       wind-speed
+       visibility
+       feels_like
+
+       per hour: (time),
+                 kind,
+                 temperature
+
+
+multiple days, first hour of day indicates day kind
+location selector
+language pack?
+
+
+
+
+
+
+def get_image(weather):
+    from python_weather.enums import Kind
+    match weather.kind:
+        case Kind.CLOUDY | Kind.PARTLY_CLOUDY | Kind.VERY_CLOUDY:
+            image=Image.open('resources/cloudy.png')
+        case Kind.FOG:
+            image=Image.open('resources/fog.png')
+        case  Kind.HEAVY_SHOWERS | Kind.HEAVY_RAIN:
+            image=Image.open('resources/heavy_rain.png')
+        case  Kind.HEAVY_SNOW | Kind.HEAVY_SNOW_SHOWERS:
+            image=Image.open('resources/heavy_snow.png')
+        case  Kind.LIGHT_SHOWERS | Kind.LIGHT_RAIN | Kind.LIGHT_SLEET | Kind.LIGHT_SLEET_SHOWERS: 
+            image=Image.open('resources/light_snow.png')
+        case Kind.SUNNY:
+            image=Image.open('resources/sunny.png')
+        case  Kind.THUNDERY_HEAVY_RAIN | Kind.THUNDERY_SHOWERS | Kind.THUNDERY_SNOW_SHOWERS: 
+            image=Image.open('resources/thundery.png')
+        case _:
+            image=Image.open('resources/cloudy.png')
+
+    image=image.convert('RGBA')
+    background = Image.new('RGBA', image.size, ImageColor.getcolor(str(bg_color),'RGBA'))
+    background.paste(image, mask=image)
+    background.thumbnail((400,400))
+    background.convert('RGB')
+
+    return background
+
+async def test():
+    await fetch_weather("Cluj-Napoca")
+    # await fetch_weather(gui.location_text)
+    get_all_days_kind()
+    print("Hourly forecast for Day 1:")
+    for hour in get_hour(1):
+        print(
+            f"  - {hour['time'].strftime('%H:%M')
+                   }: {hour['kind']} | {hour['temperature']}°C"
+        )
+    hours = get_hours()
+    for day_index, day in enumerate(hours):
+        print(f"Day {day_index}:")
+        if day_index == 0:
+            today = get_today()
+            print(f"\nDay {day_index} (Today):")
+            print(
+                f"  Date: {today['time']} ({today['weekday']}) | Temp: {
+                    today['temperature']}°C | Moon: {today['moon']}",
+                f"  Feels Like: {today['feels_like']}°C | Humidity: {
+                    today['humidity']}% | "
+                f"Wind: {today['wind_speed']} km/h {today['wind_direction']
+                                                    } | Visibility: {today['visibility']} km",
+            )
+        else:
+            day_data = get_all_days()[day_index]
+            print(f"\nDay {day_index}:")
+            print(
+                f"  Date: {day_data['time']} ({day_data['weekday']}) | Temp: {
+                    day_data['temperature']}°C | Moon: {day_data['moon']}"
+            )
+
+        print("  Hourly forecast:")
+        for hour in day:
+            print(
+                f"  Time: {hour['time']} | Kind: {hour['kind']} | Temp: {
+                    hour['temperature']}|Humidity:{hour['humidity']}"
+            )
+    print(get_current_hour())
