@@ -1,6 +1,6 @@
 # Python Weather Application
 
-This is a Python-based weather application that provides a graphical user interface (GUI) to display the current weather and a 3-day forecast.
+This is a Python-based weather application that provides a graphical user interface to display the current weather and a 3-day forecast.
 
 ## Features
 
